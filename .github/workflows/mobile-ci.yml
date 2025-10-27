@@ -1,0 +1,55 @@
+name: Mobile CI – Integración Continua (Módulo de Gamificación)
+
+on:
+  push:
+    branches: [ Jesus, Eulogio ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    name: Verificación del Proyecto Móvil
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar integridad del proyecto Expo
+        run: bash scripts/run-doctor.sh
+
+      - name: Ejecutar pruebas automatizadas
+        run: bash scripts/run-tests.sh
+
+  build-android:
+    name: Construir aplicación Android (solo en main)
+    if: github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar EAS CLI
+        run: npm install -g eas-cli
+
+      
