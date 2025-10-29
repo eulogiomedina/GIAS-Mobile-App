@@ -1,4 +1,4 @@
-name: Mobile CI – Integración Continua (Módulo de Gamificación)
+name: Mobile CI – Integración Continua (Aplicación GIAS Móvil)
 
 on:
   push:
@@ -8,48 +8,64 @@ on:
 
 jobs:
   build-test:
-    name: Verificación del Proyecto Móvil
+    name: 🔍 Validar proyecto y ejecutar pruebas (CI)
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Descargar repositorio
+      - name: 📥 Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      - name: ⚙️ Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Instalar dependencias
+      - name: 📦 Instalar dependencias
         run: npm ci
 
-      - name: Verificar integridad del proyecto Expo
+      - name: 🔎 Verificar integridad con Expo Doctor
         run: bash scripts/run-doctor.sh
 
-      - name: Ejecutar pruebas automatizadas
+      - name: 🧪 Ejecutar pruebas automatizadas (Jest)
         run: bash scripts/run-tests.sh
 
   build-android:
-    name: Construir aplicación Android (solo en main)
+    name: 📱 Construcción automática del APK (desde main)
     if: github.ref == 'refs/heads/main'
     needs: build-test
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Descargar repositorio
+      - name: 📥 Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      - name: ⚙️ Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Instalar dependencias
+      - name: 📦 Instalar dependencias
         run: npm ci
 
-      - name: Instalar EAS CLI
+      - name: 🛠 Instalar EAS CLI
         run: npm install -g eas-cli
 
-      
+      - name: 🚀 Generar build Android (APK o AAB)
+        id: build
+        run: bash scripts/build-android.sh preview
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🔗 Guardar URL del build como artefacto
+        if: steps.build.outcome == 'success'
+        run: |
+          echo "URL del build generado: ${{ steps.build.outputs.build_url }}" > build_url.txt
+
+      - name: 📎 Subir artefacto del build
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-url
+          path: build_url.txt
