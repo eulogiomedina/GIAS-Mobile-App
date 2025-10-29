@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-echo "Ejecutando pruebas unitarias..."
-npm test -- --ci || echo "⚠ No se encontraron pruebas unitarias, se omite esta etapa."
+
+echo "🧪 Ejecutando pruebas automatizadas con Jest (modo CI)..."
+
+if npm run test:ci; then
+  echo "✅ Todas las pruebas pasaron exitosamente."
+else
+  echo "❌ Algunas pruebas fallaron o no se encontraron."
+  exit 1
+fi
