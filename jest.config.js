@@ -4,7 +4,7 @@ const defaultConfig = getDefaultConfig(__dirname);
 module.exports = {
   preset: 'jest-expo',
   testEnvironment: 'jsdom',
-  setupFiles: ['<rootDir>/__tests__/setup.js'], // mock global de Expo
+  setupFiles: ['<rootDir>/setup.js'], // mock global de Expo
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
 
   transformIgnorePatterns: [
