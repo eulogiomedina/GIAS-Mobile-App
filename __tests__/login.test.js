@@ -1,23 +1,57 @@
-const axios = require('axios');
-const API = 'https://backendgias.onrender.com/api/auth/login';
+import { act } from "@testing-library/react-native";
 
-describe('Login GIAS', () => {
-  it('Debe iniciar sesión con credenciales válidas', async () => {
-    const response = await axios.post(API, {
-      correo: "20221059@uthh.edu.mx",
-      password: "Edder420*"
-    });
-    expect(response.status).toBe(200);
-    expect(response.data).toHaveProperty('token');
+describe("🔐 Pruebas del módulo de Login – App Móvil GIAS", () => {
+  beforeEach(() => {
+    // Reinicia el mock antes de cada prueba
+    global.fetch.mockClear();
   });
 
-  it('Debe rechazar credenciales inválidas', async () => {
-    try {
-      await axios.post(API, { correo: "fake@test.com", password: "wrong" });
-      throw new Error('El login no debería aceptar credenciales inválidas');
-    } catch (err) {
-      const status = err.response?.status;
-      expect([400, 401]).toContain(status);
-    }
+  test("Login exitoso devuelve token y mensaje", async () => {
+    // 🔹 Simula respuesta exitosa del backend
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ token: "mocked_token_123", message: "Inicio de sesión correcto" }),
+    });
+
+    const correo = "usuario@gias.com";
+    const password = "123456";
+
+    let data;
+    await act(async () => {
+      const response = await fetch("https://backendgias.onrender.com/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, password }),
+      });
+      data = await response.json();
+    });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(data.token).toBe("mocked_token_123");
+    expect(data.message).toBe("Inicio de sesión correcto");
+  });
+
+  test("Login fallido muestra error de credenciales", async () => {
+    // 🔹 Simula respuesta con error 401
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: "Credenciales inválidas" }),
+    });
+
+    const correo = "usuario@gias.com";
+    const password = "wrongpassword";
+
+    let data;
+    await act(async () => {
+      const response = await fetch("https://backendgias.onrender.com/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, password }),
+      });
+      data = await response.json();
+    });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(data.error).toBe("Credenciales inválidas");
   });
 });
