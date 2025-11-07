@@ -2,10 +2,10 @@ name: Mobile CI/CD – Integración Continua y Construcción de APK (GIAS Móvil
 
 on:
   push:
-    branches: [ Jesus, Eulogio ]        # Ejecuta CI al hacer push a ramas de desarrollo
+    branches: [ Jesus, Eulogio ]
   pull_request:
-    branches: [ main ]                  # Ejecuta CI antes de hacer merge a main
-  workflow_dispatch:                    # Permite ejecutarlo manualmente desde GitHub Actions
+    branches: [ main ]
+  workflow_dispatch: # permite ejecutarlo manualmente
 
 jobs:
   # 🧩 FASE 1: INTEGRACIÓN CONTINUA (CI)
@@ -28,16 +28,16 @@ jobs:
 
       - name: 🔎 Verificar integridad con Expo Doctor
         run: |
-          echo "Ejecutando Expo Doctor..."
-          npx expo doctor || true        # No rompe el workflow si hay advertencias menores
+          echo "🔎 Ejecutando Expo Doctor..."
+          npx expo doctor || true       # no falla si hay warnings
 
       - name: 🧪 Ejecutar pruebas automatizadas (Jest)
         run: |
-          echo "Ejecutando pruebas automáticas..."
+          echo "🧪 Ejecutando pruebas automáticas..."
           npm run test:ci
 
 
-    # 🚀 FASE 2: ENTREGA CONTINUA (CD) — MAIN o Eulogio
+  # 🚀 FASE 2: ENTREGA CONTINUA (CD)
   build-android:
     name: 📱 Construcción automática del APK (main o Eulogio)
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Eulogio'
@@ -57,46 +57,50 @@ jobs:
       - name: 📦 Instalar dependencias
         run: npm ci
 
-      - name: 🛠 Instalar EAS CLI
-        run: npm install -g eas-cli
+      - name: 🛠 Instalar EAS CLI + JQ
+        run: |
+          npm install -g eas-cli
+          sudo apt-get install -y jq
 
       - name: 🔐 Verificar credenciales Expo
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          echo "🔐 Validando credenciales de Expo..."
+          echo "🔐 Verificando credenciales..."
           if [ -z "$EXPO_TOKEN" ]; then
             echo "❌ ERROR: EXPO_TOKEN no está configurado en GitHub Secrets"
             exit 1
           else
-            echo "✅ EXPO_TOKEN detectado (token ocultado por seguridad)"
+            echo "✅ EXPO_TOKEN detectado (token oculto por seguridad)"
           fi
 
-      - name: 🔐 Autenticarse en Expo (usa token secreto EXPO_TOKEN)
+      - name: 🔑 Autenticarse en Expo
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           echo "🔑 Autenticando en Expo..."
           eas whoami || eas login --token "$EXPO_TOKEN"
 
-      - name: 🚀 Generar build Android (APK o AAB)
+      - name: 🚀 Generar build Android (APK / AAB mediante Expo Cloud)
         id: eas_build
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          echo "📱 Iniciando build de Android..."
-          eas build --platform android --non-interactive --profile preview --output=./build-output
-          echo "build_url=https://expo.dev/accounts/eulogio/projects/gias-mobile/builds" >> $GITHUB_OUTPUT
+          echo "📱 Iniciando build en Expo..."
+          BUILD_OUTPUT=$(eas build --platform android --profile preview --non-interactive --json)
+          BUILD_URL=$(echo $BUILD_OUTPUT | jq -r '.[0].buildUrl')
+          echo "✅ Build generado en Expo:"
+          echo "$BUILD_URL"
+          echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
 
-      - name: 🔗 Guardar URL del build como artefacto
+      - name: 🔗 Guardar URL del APK como artefacto
         if: success()
         run: |
-          echo "✅ Build generado"
-          echo "URL del build: ${{ steps.eas_build.outputs.build_url }}" > build_url.txt
+          echo "🔗 URL del build APK: ${{ steps.eas_build.outputs.build_url }}" > build_url.txt
 
-      - name: 📎 Subir artefacto del build (APK)
+      - name: 📎 Subir URL del APK como artefacto
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: APK-GIAS-Mobile
-          path: build-output
+          path: build_url.txt
