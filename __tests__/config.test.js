@@ -1,37 +1,38 @@
 /**
  * ⚙️ __tests__/config.test.js
  * Verifica la configuración base de la app móvil GIAS.
- * Comprueba que Expo y SecureStore estén correctamente inicializados y mockeados.
+ * Mock de Platform y SecureStore para entorno de pruebas.
  */
 
-import * as SecureStore from "expo-secure-store";
+// ✅ MOCKS antes de importar
+jest.mock("react-native", () => ({
+  Platform: { OS: "android" },
+}));
+
+jest.mock("expo-secure-store", () => ({
+  setItemAsync: jest.fn(),
+  getItemAsync: jest.fn(),
+}));
+
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
 describe("Configuración del entorno móvil GIAS", () => {
-  beforeAll(() => {
-    // 🧩 Fuerza Platform.OS = "android" incluso si Expo lo sobrescribe
-    Object.defineProperty(Platform, "OS", {
-      get: () => "android",
-    });
-  });
-
   test("Expo se inicializa correctamente", () => {
-    // ✅ Verifica que la plataforma simulada sea Android
+    // ✅ Verifica que Jest mockea correctamente Platform.OS
     expect(Platform.OS).toBe("android");
   });
 
   test("SecureStore funciona con mocks", async () => {
-    // 🧪 Simula almacenamiento seguro del token
     SecureStore.setItemAsync.mockResolvedValueOnce(true);
 
     await SecureStore.setItemAsync("token", "12345");
 
-    // ✅ Valida que se haya llamado con los argumentos correctos
+    // ✅ Valida que se haya llamado correctamente
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith("token", "12345");
   });
 
   test("SecureStore recupera datos correctamente", async () => {
-    // 🧩 Mockea la lectura de datos almacenados
     SecureStore.getItemAsync.mockResolvedValueOnce("12345");
 
     const value = await SecureStore.getItemAsync("token");
