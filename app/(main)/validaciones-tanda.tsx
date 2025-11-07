@@ -85,7 +85,7 @@ export default function ValidacionesTandaScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.9,
+      quality: 1,
     });
     if (!result.canceled) {
       setter(result.assets[0].uri);
@@ -99,7 +99,10 @@ export default function ValidacionesTandaScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      quality: 0.9,
+      quality: 1,
+      base64: false,
+      exif: true,               
+      aspect: [4, 3],
     });
     if (!result.canceled) {
       setter(result.assets[0].uri);
@@ -110,7 +113,7 @@ export default function ValidacionesTandaScreen() {
   // Acciones principales
   // =========================
   const handleSubmit = async () => {
-    if (!user?.id) {
+    if (!user?._id) {
       return Alert.alert("Error", "No se encontró el usuario logueado.");
     }
     if (!monto || !tipo) {

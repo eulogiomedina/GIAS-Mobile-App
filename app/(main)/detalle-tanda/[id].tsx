@@ -37,7 +37,7 @@ export default function DetalleTanda() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { user } = useContext(AuthContext);
-  const userId = (user?.id || user?._id) as string | undefined;
+  const userId = (user?._id || user?._id) as string | undefined;
 
   const [tanda, setTanda] = useState<TandaDetalle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,26 +52,25 @@ export default function DetalleTanda() {
   };
 
   useEffect(() => {
-    const load = async () => {
-      if (!userId) {
-        setLoading(false);
-        setTanda(null);
-        return;
-      }
-      try {
-        const res = await fetch(`${API_URL}/api/tandas/gestion-cuenta/${userId}`);
-        const data = await res.json();
-        if (res.ok) setTanda(data);
-        else setTanda(null);
-      } catch (e) {
-        console.error("❌ Error al cargar detalles de tanda:", e);
-        setTanda(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [userId]);
+  const load = async () => {
+    if (!id) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/tandas/${id}`);
+      const data = await res.json();
+      if (res.ok) setTanda(data);
+      else setTanda(null);
+    } catch (e) {
+      console.error("❌ Error al cargar detalles de tanda:", e);
+      setTanda(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, [id]);
+
 
   // fechas del usuario
   const fechaPagoUsuario = formatFecha(

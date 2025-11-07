@@ -37,10 +37,10 @@ jobs:
           npm run test:ci
 
 
-  # 🚀 FASE 2: ENTREGA CONTINUA (CD) — SOLO EN MAIN
+    # 🚀 FASE 2: ENTREGA CONTINUA (CD) — MAIN o Eulogio
   build-android:
-    name: 📱 Construcción automática del APK (solo en main)
-    if: github.ref == 'refs/heads/main'
+    name: 📱 Construcción automática del APK (main o Eulogio)
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Eulogio'
     needs: build-test
     runs-on: ubuntu-22.04
 
@@ -60,11 +60,23 @@ jobs:
       - name: 🛠 Instalar EAS CLI
         run: npm install -g eas-cli
 
+      - name: 🔐 Verificar credenciales Expo
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "🔐 Validando credenciales de Expo..."
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "❌ ERROR: EXPO_TOKEN no está configurado en GitHub Secrets"
+            exit 1
+          else
+            echo "✅ EXPO_TOKEN detectado (token ocultado por seguridad)"
+          fi
+
       - name: 🔐 Autenticarse en Expo (usa token secreto EXPO_TOKEN)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          echo "Autenticando en Expo..."
+          echo "🔑 Autenticando en Expo..."
           eas whoami || eas login --token "$EXPO_TOKEN"
 
       - name: 🚀 Generar build Android (APK o AAB)
@@ -72,16 +84,17 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          echo "Iniciando build de Android..."
+          echo "📱 Iniciando build de Android..."
           eas build --platform android --non-interactive --profile preview --output=./build-output
           echo "build_url=https://expo.dev/accounts/eulogio/projects/gias-mobile/builds" >> $GITHUB_OUTPUT
 
       - name: 🔗 Guardar URL del build como artefacto
         if: success()
         run: |
-          echo "URL del build generado: ${{ steps.eas_build.outputs.build_url }}" > build_url.txt
+          echo "✅ Build generado"
+          echo "URL del build: ${{ steps.eas_build.outputs.build_url }}" > build_url.txt
 
-      - name: 📎 Subir artefacto del build
+      - name: 📎 Subir artefacto del build (APK)
         if: success()
         uses: actions/upload-artifact@v4
         with:

@@ -81,18 +81,20 @@ export default function AhorroScreen() {
       <View style={styles.container}>
         <Header title="" />
 
-        {/* ✅ SubHeader */}
         <View style={styles.subHeader}>
-          <Text style={styles.welcomeText}>Bienvenido, {user?.nombre || "usuario"}</Text>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity>
-              <Ionicons name="notifications-outline" size={22} color="#fff" style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="menu" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </View>
+              <Text style={styles.welcomeText}>Bienvenido, {user?.nombre || "usuario"}</Text>
+              <View style={styles.iconContainer}>
+                {/* 🔔 Botón que lleva a la pantalla de notificaciones */}
+                <TouchableOpacity onPress={() => router.push("/(main)/notificaciones")}>
+                  <Ionicons name="notifications-outline" size={22} color="#fff" style={styles.icon} />
+                </TouchableOpacity>
+
+                <TouchableOpacity>
+                  <Ionicons name="menu" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+         </View>
+
 
         {/* ✅ Contenido con Scroll */}
         <ScrollView

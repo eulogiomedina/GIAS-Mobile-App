@@ -38,16 +38,24 @@ export default function MainTabs() {
           ),
         }}
       />
+
+      {/* 🔒 RUTAS INTERNAS (sin icono en la barra inferior) */}
       <Tabs.Screen
         name="detalle-tanda/[id]"
-        options={{
-          href: null, 
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="validaciones-tanda"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="(hidden)/PagoExitoso"
+        options={{ href: null }} // ✅ Esto oculta completamente la ruta
+      />
+      <Tabs.Screen
+        name="notificaciones"
         options={{
-          href: null, 
+          href: null, // 🚫 No aparecerá en la barra de tabs
         }}
       />
     </Tabs>

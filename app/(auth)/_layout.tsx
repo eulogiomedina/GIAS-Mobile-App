@@ -54,6 +54,7 @@ export default function AuthTabs() {
           href: null, // 👈 Esto la oculta del TabBar
         }}
       />
+      
 
     </Tabs>
 
