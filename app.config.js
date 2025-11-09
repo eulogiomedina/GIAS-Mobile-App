@@ -69,7 +69,7 @@ export default ({ config }) => ({
       reactCompiler: true
     },
 
-    // ✅ Extra — configuración para CI/CD en EAS
+    //  Extra — configuración para CI/CD en EAS
     extra: {
       API_URL: process.env.API_URL ?? "https://backendgias.onrender.com",
       APP_VARIANT: process.env.APP_VARIANT ?? "preview",
