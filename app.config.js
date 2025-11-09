@@ -69,11 +69,15 @@ export default ({ config }) => ({
       reactCompiler: true
     },
 
-    // Parte agregada para CI/CD
+    // ✅ Extra — configuración para CI/CD en EAS
     extra: {
       API_URL: process.env.API_URL ?? "https://backendgias.onrender.com",
       APP_VARIANT: process.env.APP_VARIANT ?? "preview",
-      FEATURE_GAMIFY: process.env.FEATURE_GAMIFY === "true"
+      FEATURE_GAMIFY: process.env.FEATURE_GAMIFY === "true",
+
+      eas: {
+        projectId: "d7957d37-7366-4421-8f09-f30878397842"
+      }
     }
   }
 });
