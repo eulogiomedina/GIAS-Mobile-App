@@ -104,3 +104,109 @@ jobs:
         with:
           name: APK-GIAS-Mobile
           path: build_url.txt
+name: Mobile CI/CD – Integración Continua y Construcción de APK (GIAS Móvil)
+
+on:
+  push:
+    branches: [ Jesus, Eulogio ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # permite ejecutarlo manualmente
+
+jobs:
+  # 🧩 FASE 1: INTEGRACIÓN CONTINUA (CI)
+  build-test:
+    name: 🔍 Validar proyecto y ejecutar pruebas (Jest + Expo)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: 📥 Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🔎 Verificar integridad con Expo Doctor
+        run: |
+          echo "🔎 Ejecutando Expo Doctor..."
+          npx expo doctor || true   # No falla si solo hay warnings
+
+      - name: 🧪 Ejecutar pruebas automatizadas (Jest)
+        run: |
+          echo "🧪 Ejecutando pruebas automáticas..."
+          npm run test:ci
+
+
+  # 🚀 FASE 2: ENTREGA CONTINUA (CD)
+  build-android:
+    name: 📱 Construcción automática del APK (main o Eulogio)
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Eulogio'
+    needs: build-test
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: 📥 Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🛠 Instalar EAS CLI + JQ
+        run: |
+          npm install -g eas-cli
+          sudo apt-get install -y jq
+
+      - name: 🔐 Verificar credenciales Expo
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "🔐 Verificando credenciales..."
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "❌ ERROR: EXPO_TOKEN no está configurado en GitHub Secrets"
+            exit 1
+          else
+            echo "✅ EXPO_TOKEN detectado (token oculto por seguridad)"
+          fi
+
+      - name: 🔑 Autenticarse en Expo
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "🔑 Autenticando en Expo..."
+          eas whoami || eas login --token "$EXPO_TOKEN"
+
+      - name: 🚀 Generar build Android (APK / AAB mediante Expo Cloud)
+        id: eas_build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "📱 Iniciando build en Expo..."
+          BUILD_OUTPUT=$(eas build --platform android --profile preview --non-interactive --json)
+          BUILD_URL=$(echo $BUILD_OUTPUT | jq -r '.[0].artifactUrl')  
+          echo "✅ Build generado en Expo:"
+          echo "$BUILD_URL"
+          echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
+
+      - name: 🔗 Guardar URL del APK como artefacto
+        if: success()
+        run: |
+          echo "🔗 URL del build APK: ${{ steps.eas_build.outputs.build_url }}" > build_url.txt
+
+      - name: 📎 Subir URL del APK como artefacto
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-GIAS-Mobile
+          path: build_url.txt
